@@ -17,8 +17,9 @@ namespace ExpenseTracker.Controllers.Api
         [Route("api/expenses/{pageSize}/{page}")]
         public IHttpActionResult GetExpensesWithPaginationResult(int page, int pageSize)
         {
-            
-            return Ok(new ExpenseViewModelList());
+            var expenseViewModelList = _expenseRepository.GetExpensesWithPaginationResult(page, pageSize);
+
+            return Ok(expenseViewModelList);
         }
     }
 }
