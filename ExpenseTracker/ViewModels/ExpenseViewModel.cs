@@ -11,13 +11,11 @@ namespace ExpenseTracker.ViewModels
         public string Title { get; set; }
 
         [Required]
-        public double Amount { get; set; }
+        public double? Amount { get; set; }
 
         [Required]
         public DateTime Date { get; set; }
 
         public string Description { get; set; }
-
-        public int CategoryId { get; set; }
     }
 }

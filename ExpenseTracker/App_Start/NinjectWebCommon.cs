@@ -1,3 +1,6 @@
+using ExpenseTracker.Core.Repositories;
+using ExpenseTracker.Models;
+
 [assembly: WebActivatorEx.PreApplicationStartMethod(typeof(ExpenseTracker.App_Start.NinjectWebCommon), "Start")]
 [assembly: WebActivatorEx.ApplicationShutdownMethodAttribute(typeof(ExpenseTracker.App_Start.NinjectWebCommon), "Stop")]
 
@@ -61,6 +64,8 @@ namespace ExpenseTracker.App_Start
         /// <param name="kernel">The kernel.</param>
         private static void RegisterServices(IKernel kernel)
         {
+            kernel.Bind<ApplicationDbContext>().To<ApplicationDbContext>();
+            kernel.Bind<IExpenseRepository>().To<ExpenseRepository>();
         }        
     }
 }

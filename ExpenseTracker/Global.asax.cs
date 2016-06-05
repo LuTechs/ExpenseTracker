@@ -6,6 +6,7 @@ using System.Web.Http;
 using System.Web.Mvc;
 using System.Web.Optimization;
 using System.Web.Routing;
+using ExpenseTracker.Automapper;
 
 namespace ExpenseTracker
 {
@@ -13,6 +14,11 @@ namespace ExpenseTracker
     {
         protected void Application_Start()
         {
+            AutoMapper.Mapper.Initialize(e =>
+            {
+                e.AddProfile<ExpenseToExpenseViewModelProfile>();
+                e.AddProfile<ExpenseViewModeltoExpenseProfile>();
+            });
             AreaRegistration.RegisterAllAreas();
             GlobalConfiguration.Configure(WebApiConfig.Register);
             FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);

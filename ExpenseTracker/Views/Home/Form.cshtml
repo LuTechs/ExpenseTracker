@@ -1,0 +1,68 @@
+﻿
+<div class="modal-header">
+    <h3 class="modal-title">{{title}}</h3>
+</div>
+<div class="modal-body">
+    <form role="form" name="itemForm">
+        <!-- Text input-->
+        <div class="form-group" ng-class="{'has-error':itemForm.Name.$error.required}">
+            <label class="control-label" for="name">Item Name</label>
+
+
+            <input id="Name" name="Name" type="text" placeholder="Item name" class="form-control input-md"
+                   required ng-model="formData.title">
+            <p class="text-danger pull-right" ng-show="itemForm.Name.$error.required">Require</p>
+
+        </div>
+
+        <!-- Text input-->
+        <div class="form-group" ng-class="{'has-error':itemForm.Amount.$error.required || itemForm.Amount.$error.number }">
+            <label class="control-label" for="Amount">Amount</label>
+
+
+            <input id="Amount" name="Amount" type="number" placeholder="Amount pay for item"
+                   class="form-control input-md"
+                   ng-model="formData.amount"
+                   required>
+            <p class="text-danger pull-right" ng-show="itemForm.Amount.$error.required">Require</p>
+            <p class="text-danger pull-right" ng-show="itemForm.Amount.$error.number">Number only</p>
+
+        </div>
+
+        <!-- Text input-->
+        <div class="form-group" ng-class="{'has-error':itemForm.Date.$error.required}">
+            <label class="control-label">Date Start</label>
+            <div class="input-group">
+                <input type="text"
+                       id="Date"
+                       name="Date"
+                       class="form-control"
+                       uib-datepicker-popup="dd-MMMM-yyyy"
+                       ng-model="formData.date"
+                       is-open="opened"
+                       close-text="Close"
+                       ng-click="open()"
+                       ng-required="true" />
+                <span class="input-group-btn">
+                    <button type="button" class="btn btn-default" ng-click="open()"><i class="glyphicon glyphicon-calendar"></i></button>
+                </span>
+            </div>
+
+            <p class="text-danger pull-right" ng-show="itemForm.Date.$error.required">Require</p>
+        </div>
+
+        <!-- Text input-->
+        <div class="form-group">
+            <label class="control-label" for="Description">Description</label>
+            <textarea id="Description" name="Description" ng-model="formData.description" class="form-control" row="3"></textarea>
+        </div>
+
+    </form>
+</div>
+
+<div class="modal-footer">
+    <div class="form-group">
+        <button class="btn btn-success" ng-click="save()" ng-disabled="itemForm.$invalid"> <span class="glyphicon glyphicon-save"></span>{{buttonTitle}}</button>
+        <button class="btn btn-warning" ng-click="cancel()"><i class="fa fa-times"></i>Cancel</button>
+    </div>
+</div>
