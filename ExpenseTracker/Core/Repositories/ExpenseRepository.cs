@@ -8,7 +8,7 @@ using ExpenseTracker.ViewModels;
 
 namespace ExpenseTracker.Core.Repositories
 {
-    public class ExpenseRepository : IExpenseRepository
+    public class ExpenseRepository : IExpenseRepository,IDisposable
     {
         private readonly ApplicationDbContext _applicationDbContext;
 
@@ -114,6 +114,11 @@ namespace ExpenseTracker.Core.Repositories
             {
                 return false;
             }
+        }
+
+        public void Dispose()
+        {
+            _applicationDbContext.Dispose();
         }
     }
 }

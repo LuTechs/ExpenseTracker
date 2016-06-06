@@ -4,29 +4,29 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Web.Http.Results;
 using ExpenseTracker.Controllers.Api;
+using ExpenseTracker.Core.Helpers;
 using ExpenseTracker.Core.Repositories;
+using ExpenseTracker.IntergrationTest.TestHelpers;
 using ExpenseTracker.ViewModels;
-using Moq;
 using Xunit;
 
-namespace ExpenseTracker.Tests.Controllers.Api
+namespace ExpenseTrackerIntegrationTest.Controllers.Api
 {
-    public class ExpenseApiControllerTest
+    public class ExpenseApiControllerIntergrationTest : IClassFixture<DatabaseFixture>
     {
-        private Mock<IExpenseRepository> _mock;
-
-        public ExpenseApiControllerTest()
+        public ExpenseApiControllerIntergrationTest(DatabaseFixture fixture)
         {
-            _mock = new Mock<IExpenseRepository>();
+            _fixture = fixture;
+            _exepnseApiController = new ExpenseApiController(new ExpenseRepository(_fixture.DbContext));
         }
+
+        private readonly DatabaseFixture _fixture;
+        private readonly ExpenseApiController _exepnseApiController;
 
         [Fact(DisplayName = "Given invalid expense id then DeleteExpense with  should return not found error")]
         public void DeleteExpenseWithInvalidId()
         {
-            
-            var exepnseApiController = new ExpenseApiController(_mock.Object);
-            _mock.Setup(x => x.DeleteExpense(1)).Returns(false);
-            var result = exepnseApiController.DeleteExpense(1);
+            var result = _exepnseApiController.DeleteExpense(999);
             Assert.NotNull(result);
             Assert.IsType<NotFoundResult>(result);
         }
@@ -34,12 +34,11 @@ namespace ExpenseTracker.Tests.Controllers.Api
         [Fact(DisplayName = "Given valid expense id then DeleteExpense with  should  delete the record")]
         public void DeleteExpenseWithValidId()
         {
-            var exepnseApiController = new ExpenseApiController(_mock.Object);
-            _mock.Setup(x => x.DeleteExpense(1)).Returns(true);
-            var result = exepnseApiController.DeleteExpense(1);
+            var result = _exepnseApiController.DeleteExpense(1);
             Assert.NotNull(result);
             Assert.IsType<OkNegotiatedContentResult<MessageViewModel>>(result);
         }
+
 
         [Fact(
             DisplayName =
@@ -47,55 +46,39 @@ namespace ExpenseTracker.Tests.Controllers.Api
             )]
         public void GetExpensesWithPaginationBySearchTextShouldReturnExpectedResult()
         {
-            var exepnseApiController = new ExpenseApiController(_mock.Object);
-
-            var expenseViewModelList = new ExpenseViewModelList
-            {
-                PageCount = 10,
-                TotalItems = 100,
-                Expenses = new List<ExpenseViewModel>()
-            };
-            _mock.Setup(x => x.GetExpensesWithPaginationResultBySearchText(1, 10, "Abc")).Returns(expenseViewModelList);
-
-            var result = exepnseApiController.GetExpensesWithPaginationBySearchText(1, 10, "Abc");
+            var result = _exepnseApiController.GetExpensesWithPaginationBySearchText(1, 10, "Nothing");
             var contentResult = result as OkNegotiatedContentResult<ExpenseViewModelList>;
 
             Assert.NotNull(result);
             Assert.IsType<OkNegotiatedContentResult<ExpenseViewModelList>>(result);
-            Assert.Equal(expenseViewModelList.PageCount, contentResult.Content.PageCount);
-            Assert.Equal(expenseViewModelList.TotalItems, contentResult.Content.TotalItems);
+            Assert.Equal(0, contentResult.Content.PageCount);
+            Assert.Equal(0, contentResult.Content.TotalItems);
         }
+
 
         [Fact(
             DisplayName = "Given page and pageSize then GetExpensesWithPaginationResult should return expected results")
         ]
         public void GetExpenseWithPaginationResult_WithPageAndPageSize_ReturnExpectedResult()
         {
-            var expenseApiController = new ExpenseApiController(_mock.Object);
+            var totalRecord = _fixture.DbContext.Expenses.Count();
+            var pageCount = PageCount.Count(totalRecord, 10);
 
-            var expenseViewModelList = new ExpenseViewModelList
-            {
-                PageCount = 10,
-                TotalItems = 100,
-                Expenses = new List<ExpenseViewModel>()
-            };
-            _mock.Setup(x => x.GetExpensesWithPaginationResult(1, 10)).Returns(expenseViewModelList);
-
-            var result = expenseApiController.GetExpensesWithPaginationResult(1, 10);
+            var result = _exepnseApiController.GetExpensesWithPaginationResult(1, 10);
             var contentResult = result as OkNegotiatedContentResult<ExpenseViewModelList>;
+
+
             Assert.NotNull(result);
             Assert.IsType<OkNegotiatedContentResult<ExpenseViewModelList>>(result);
-            Assert.Equal(expenseViewModelList.PageCount, contentResult.Content.PageCount);
-            Assert.Equal(expenseViewModelList.TotalItems, contentResult.Content.TotalItems);
+            Assert.Equal(pageCount, contentResult.Content.PageCount);
+            Assert.Equal(totalRecord, contentResult.Content.TotalItems);
         }
+
 
         [Fact(DisplayName = "Given invalid model then PostExpense with  should return error")]
         public void PostExpenseWithInValidModelShouldUpdateTheRecord()
         {
-            var exepnseApiController = new ExpenseApiController(_mock.Object);
             var expenseViewModel = new ExpenseViewModel();
-
-            _mock.Setup(x => x.AddExpense(expenseViewModel)).Returns(true);
 
             var validationContext = new ValidationContext(expenseViewModel, null, null);
             var validationResults = new List<ValidationResult>();
@@ -103,22 +86,19 @@ namespace ExpenseTracker.Tests.Controllers.Api
 
             foreach (var validationResult in validationResults)
             {
-                exepnseApiController.ModelState.AddModelError(validationResult.MemberNames.First(),
+                _exepnseApiController.ModelState.AddModelError(validationResult.MemberNames.First(),
                     validationResult.ErrorMessage);
             }
-            var result = exepnseApiController.PostExpense(expenseViewModel);
+            var result = _exepnseApiController.PostExpense(expenseViewModel);
             Assert.NotNull(result);
             Assert.IsType<InvalidModelStateResult>(result);
         }
 
-
         [Fact(DisplayName = "Given valid model then PostExpense with  should  add new record")]
         public void PostExpenseWithValidModelShouldUpdateTheRecord()
         {
-            var exepnseApiController = new ExpenseApiController(_mock.Object);
             var expenseViewModel = new ExpenseViewModel {Amount = 20, Title = "Buy Sth", Date = DateTime.UtcNow};
 
-            _mock.Setup(x => x.AddExpense(expenseViewModel)).Returns(true);
 
             var validationContext = new ValidationContext(expenseViewModel, null, null);
             var validationResults = new List<ValidationResult>();
@@ -126,10 +106,10 @@ namespace ExpenseTracker.Tests.Controllers.Api
 
             foreach (var validationResult in validationResults)
             {
-                exepnseApiController.ModelState.AddModelError(validationResult.MemberNames.First(),
+                _exepnseApiController.ModelState.AddModelError(validationResult.MemberNames.First(),
                     validationResult.ErrorMessage);
             }
-            var result = exepnseApiController.PostExpense(expenseViewModel);
+            var result = _exepnseApiController.PostExpense(expenseViewModel);
             Assert.NotNull(result);
             Assert.IsType<OkNegotiatedContentResult<MessageViewModel>>(result);
         }
@@ -137,21 +117,17 @@ namespace ExpenseTracker.Tests.Controllers.Api
         [Fact(DisplayName = "Given invalid model then PutExpense should  return error")]
         public void PutExpenseWithInvalidModelShouldUpdateTheRecord()
         {
-            var exepnseApiController = new ExpenseApiController(_mock.Object);
             var expenseViewModel = new ExpenseViewModel();
-
-            _mock.Setup(x => x.UpdateExpense(1, expenseViewModel)).Returns(true);
-
             var validationContext = new ValidationContext(expenseViewModel, null, null);
             var validationResults = new List<ValidationResult>();
             Validator.TryValidateObject(expenseViewModel, validationContext, validationResults);
 
             foreach (var validationResult in validationResults)
             {
-                exepnseApiController.ModelState.AddModelError(validationResult.MemberNames.First(),
+                _exepnseApiController.ModelState.AddModelError(validationResult.MemberNames.First(),
                     validationResult.ErrorMessage);
             }
-            var result = exepnseApiController.PutExpense(1, expenseViewModel);
+            var result = _exepnseApiController.PutExpense(1, expenseViewModel);
             Assert.NotNull(result);
             Assert.IsType<InvalidModelStateResult>(result);
         }
@@ -159,10 +135,13 @@ namespace ExpenseTracker.Tests.Controllers.Api
         [Fact(DisplayName = "Given valid model then PutExpense with  should  update the record")]
         public void PutExpenseWithValidModelShouldUpdateTheRecord()
         {
-            var exepnseApiController = new ExpenseApiController(_mock.Object);
-            var expenseViewModel = new ExpenseViewModel {Amount = 20, Title = "Buy Sth", Date = DateTime.UtcNow};
+            var expenseViewModel = new ExpenseViewModel
+            {
+                Amount = 20,
+                Title = "Buy iPad Pro 12 inch",
+                Date = DateTime.UtcNow
+            };
 
-            _mock.Setup(x => x.UpdateExpense(1, expenseViewModel)).Returns(true);
 
             var validationContext = new ValidationContext(expenseViewModel, null, null);
             var validationResults = new List<ValidationResult>();
@@ -170,13 +149,12 @@ namespace ExpenseTracker.Tests.Controllers.Api
 
             foreach (var validationResult in validationResults)
             {
-                exepnseApiController.ModelState.AddModelError(validationResult.MemberNames.First(),
+                _exepnseApiController.ModelState.AddModelError(validationResult.MemberNames.First(),
                     validationResult.ErrorMessage);
             }
-            var result = exepnseApiController.PutExpense(1, expenseViewModel);
+            var result = _exepnseApiController.PutExpense(2, expenseViewModel);
             Assert.NotNull(result);
             Assert.IsType<OkNegotiatedContentResult<MessageViewModel>>(result);
         }
-
-     }
+    }
 }
